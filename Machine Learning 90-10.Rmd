@@ -1,0 +1,139 @@
+---
+title: "Modelo 90%"
+author: "Matheus Assis de Oliveira"
+date: "2023-11-11"
+output:
+  pdf_document: default
+  html_document: default
+---
+```{r library, echo=TRUE}
+library(plyr)
+library(caret)
+library(randomForest)
+library(caTools)
+library(dplyr)
+
+```
+
+
+
+```{r montando o modelo, echo = TRUE}
+amostra2.IDHM <- predic.IDHM$IDHM %>%
+  createDataPartition(p = 0.9, list = FALSE)
+treino90.IDHM  <- predic.IDHM[amostra2.IDHM, ]
+teste90.IDHM <- predic.IDHM[-amostra2.IDHM, ]
+
+# random forest para regressão, iniciando com 500 arvores e mtry of 3
+IDHM.model90.1 <- randomForest(IDHM ~ ., data = treino90.IDHM, ntree=500, mtry = 3, 
+                         importance = TRUE, na.action = na.omit) 
+print(IDHM.model90.1) 
+# Plotar erro vs numero de arvores 
+
+plot(IDHM.model90.1, main = "")
+
+# Adicionar título e fonte no estilo ABNT
+title(main = "Gráfico 4 - Erro vs Número de Árvores no Modelo Random Forest", adj = 0)
+mtext("Fonte: Elaboração própria com dados do Atlas Brasil", side=1, line=4, adj = 0, cex=0.8)
+
+```
+
+## R Markdown
+
+mtry test
+
+```{r mtry, echo=TRUE}
+#Usar tuneRF para determinar se há melhor mtry na tentativa de encontrar o valor que produz o menor erro.
+mtry2 <- tuneRF(treino90.IDHM[-6],treino90.IDHM$IDHM, ntreeTry=500,
+               stepFactor=1,improve=0.01, trace=TRUE, plot=FALSE)
+print(mtry2)
+
+```
+
+## Including Plots
+
+
+```{r modelo 2, echo=TRUE}
+set.seed(123)
+# random forest para regressão com mtry=4
+IDHM.model90.2 <- randomForest(IDHM ~ ., data = treino90.IDHM, ntree=500, mtry = 4, 
+                             importance = TRUE, na.action = na.omit) 
+print(IDHM.model90.2) 
+# Plot the error vs the number of trees graph 
+plot(IDHM.model90.2, main = "")
+
+# Adicionar título e fonte no estilo ABNT
+title(main = "Gráfico 5 - Erro vs Número de Árvores no Modelo Random Forest", adj = 0)
+mtext("Fonte: Elaboração própria com dados do Atlas Brasil", side=1, line=4, adj = 0, cex=0.8)
+
+
+```
+
+
+
+```{r avaliação modelo, echo = TRUE}
+# Fazer predições com dados de teste usando modelo 1 (mtry = 3)
+IDHM.predições90.1 <- IDHM.model90.1 %>% predict(teste90.IDHM)
+head(IDHM.predições90.1)
+# Fazer predições com dados de teste usando modelo 2 (mtry = 4)
+IDHM.predições90.2 <- IDHM.model90.2 %>% predict(teste90.IDHM)
+head(IDHM.predições90.2)
+
+
+# Calcular o erro médio de previsão -- erro quadrático médio da raiz (RMSE) de ambos os modelos
+RMSE(IDHM.predições90.1, teste90.IDHM$IDHM)
+RMSE(IDHM.predições90.2, teste90.IDHM$IDHM)
+
+
+### O modelo original com mtry=4 (hdi.rf.1) na verdade tem um RMSE menor, portanto, é o melhor modelo a ser usado daqui para frente. Um RMSE de 0.006852 é consideravelmente baixo e indica um modelo de previsão altamente válido. analisar a significância de cada variável para ver possíveis mudanças na média.
+
+#avaliar a importância das variáveis para o modelo 
+importance(IDHM.model90.1)
+# Plot da importância das variáveis
+varImpPlot(IDHM.model90.1, main = "")
+
+# Adicionar título e fonte no estilo ABNT
+title(main = "Gráfico 2 - Importância das Variáveis no Modelo Random Forest", adj = 0)
+mtext("Fonte: Elaboração própria com dados do Atlas Brasil", side=1, line=4, adj = 0, cex=0.8)
+```
+
+
+
+
+```{r dataset, echo=TRUE}
+# Converter predições para um data frame 
+IDHM.predições90.df <- as.data.frame(IDHM.predições90.1)
+# Mesclar com base no índice
+IDHM.predições90.df <- merge(teste90.IDHM, IDHM.predições90.df, by.x = 0, by.y = 0, all.x = TRUE, all.y = TRUE)
+# Criar uma nova coluna calculada com a diferença da predição do IDHM, e o valor Real
+IDHM.predições90.df$diff <- with(IDHM.predições90.df, IDHM.predições90.df$IDHM - IDHM.predições90.df$IDHM.predições90.1)
+# Obter a média da diferença
+IDHM.predições90.df
+mean(IDHM.predições90.df[,"diff"])
+#0.001515058, significa que, em média, o modelo está subestimando o IDHM em 0.001515058 unidades.
+
+
+### visualizando as predições do modelo em comparação com os valores reais em plots
+# Redefinir o índice de linha(row.names)
+rownames(IDHM.predições90.df ) <- NULL
+# Ordenar os dados (sort)
+IDHM.predições90.df <- IDHM.predições90.df[order(IDHM.predições90.df$IDHM),]
+# Plotar as predições versus o IDHM real
+plot(IDHM.predições90.df$IDHM.predições90.1, type = "l", col="red", 
+     xlab="Dados Testados", ylab="Real vs. Predição", main="")
+
+# Adicionar linhas do IDHM Real
+lines(IDHM.predições90.df$IDHM, lwd=2)
+
+# Adicionar a legenda
+legend("topright", 
+       legend=c("Predição IDHM", "IDHM Real"),
+       col=c("red", "black"),
+       lty=1,
+       cex=0.8)
+
+# Adicionar título e fonte no estilo ABNT
+title(main = "Gráfico 3 - Variação da Predição do IDHM", adj = 0)
+mtext("Fonte: Elaboração própria com dados do Atlas Brasil", side=1, line=4, adj = 0, cex=0.8)
+
+```
+

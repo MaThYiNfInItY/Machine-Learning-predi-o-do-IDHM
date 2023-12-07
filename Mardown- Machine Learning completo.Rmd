@@ -1,0 +1,899 @@
+---
+title: "Machine Learning completo"
+author: "Matheus Assis e Oliveira"
+date: "2023-10-11"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+instalar pacotes para o estudo
+
+# instalação dos Pacotes e dependencias 
+install.packages("tidyr", dependencies = TRUE)
+install.packages("readxl", dependencies = TRUE)
+install.packages("plyr", dependencies = TRUE)
+install.packages("corrplot", dependencies = TRUE)
+install.packages("RColorBrewer", dependencies = TRUE)
+install.packages("ggplot2", dependencies = TRUE)
+install.packages("ggpubr", dependencies = TRUE)
+install.packages("plyr", dependencies = TRUE)
+install.packages("caret", dependencies = TRUE)
+install.packages("randomForest", dependencies = TRUE)
+install.packages("caTools", dependencies = TRUE)
+
+
+carregar pacotes para a Engenharia de dados.
+```{R packages, include=FALSE, echo=TRUE}
+library(tidyr)
+library(readxl)
+library(plyr)
+```
+
+seguindo começamos a importar os dados em arquivo excel: xlsx, e converter anos a coluna,
+limpar o X a frente dos anos e converter anos para numérico.
+
+```{r importar dados em xlsx, echo=TRUE}
+renda_per_capita <- read_excel("renda.per.capita.xlsx")
+#usar gather para converter anos à coluna
+renda_per_capita <- gather(renda_per_capita, ano, renda_per_capita, X2012:X2021, convert = TRUE)
+#Limpar o X a frente do ano
+renda_per_capita$ano <- gsub('X', '', renda_per_capita$ano)
+#converter ano de character para numeric
+renda_per_capita <- transform(renda_per_capita, ano = as.numeric(ano))
+renda_per_capita <- transform(renda_per_capita, renda_per_capita = as.numeric(renda_per_capita))
+
+```
+
+
+
+em seguida repete para demais arquivos com as seguintes variáveis.
+
+
+
+```{r importar demais dados, echo=TRUE}
+sub_esco_pop <- read_excel("sub.esco.pop.xlsx")
+sub_esco_pop <- gather(sub_esco_pop, ano, sub_esco_pop, X2012:X2021, convert = TRUE)
+sub_esco_pop$ano <- gsub('X', '', sub_esco_pop$ano)
+sub_esco_pop <- transform(sub_esco_pop, ano = as.numeric(ano))
+sub_esco_pop <- transform(sub_esco_pop, sub_esco_pop = as.numeric(sub_esco_pop))
+
+
+
+sub_freq_esco <- read_excel("sub.freq.esco.xlsx")
+sub_freq_esco <- gather(sub_freq_esco, ano, sub_freq_esco, X2012:X2021, convert = TRUE)
+sub_freq_esco$ano <- gsub('X', '', sub_freq_esco$ano)
+sub_freq_esco <- transform(sub_freq_esco, ano = as.numeric(ano))
+sub_freq_esco <- transform(sub_freq_esco, sub_freq_esco = as.numeric(sub_freq_esco))
+
+
+
+
+esperança_de_vida <- read_excel("esperança.de.vida.xlsx")
+esperança_de_vida <- gather(esperança_de_vida, ano, esperança_de_vida, X2012:X2021, convert = TRUE)
+esperança_de_vida$ano <- gsub('X', '', esperança_de_vida$ano)
+esperança_de_vida <- transform(esperança_de_vida, ano = as.numeric(ano))
+esperança_de_vida <- transform(esperança_de_vida, esperança_de_vida = as.numeric(esperança_de_vida))
+
+
+
+porcent_pobres <- read_excel("porcent_pobres.xlsx")
+porcent_pobres <- gather(porcent_pobres, ano, porcent_pobres, X2012:X2021, convert = TRUE)
+porcent_pobres$ano <- gsub('X', '', porcent_pobres$ano)
+porcent_pobres <- transform(porcent_pobres, ano = as.numeric(ano))
+porcent_pobres <- transform(porcent_pobres, porcent_pobres = as.numeric(porcent_pobres))
+
+
+
+população_total <- read_excel("população_total.xlsx")
+população_total <- gather(população_total, ano, população_total, X2012:X2021, convert = TRUE)
+população_total$ano <- gsub('X', '', população_total$ano)
+população_total <- transform(população_total, ano = as.numeric(ano))
+população_total <- transform(população_total, população_total = as.numeric(população_total))
+
+
+
+mortalidade_infantil <- read_excel("mortalidade_infantil.xlsx")
+mortalidade_infantil <- gather(mortalidade_infantil, ano, mortalidade_infantil, X2012:X2021, convert = TRUE)
+mortalidade_infantil$ano <- gsub('X', '', mortalidade_infantil$ano)
+mortalidade_infantil <- transform(mortalidade_infantil, ano = as.numeric(ano))
+mortalidade_infantil <- transform(mortalidade_infantil, mortalidade_infantil = as.numeric(mortalidade_infantil))
+
+
+
+media_anos_de_estudo <- read_excel("media_anos_de_estudo.xlsx")
+media_anos_de_estudo <- gather(media_anos_de_estudo, ano, media_anos_de_estudo, X2012:X2021, convert = TRUE)
+media_anos_de_estudo$ano <- gsub('X', '', media_anos_de_estudo$ano)
+media_anos_de_estudo <- transform(media_anos_de_estudo, ano = as.numeric(ano))
+media_anos_de_estudo <- transform(media_anos_de_estudo, media_anos_de_estudo = as.numeric(media_anos_de_estudo))
+
+
+
+indice_gini <- read_excel("indice_gini.xlsx")
+indice_gini <- gather(indice_gini, ano, indice_gini, X2012:X2021, convert = TRUE)
+indice_gini$ano <- gsub('X', '', indice_gini$ano)
+indice_gini <- transform(indice_gini, ano = as.numeric(ano))
+indice_gini <- transform(indice_gini, indice_gini = as.numeric(indice_gini))
+
+
+
+ind_theil_L <- read_excel("ind_theil_L.xlsx")
+ind_theil_L <- gather(ind_theil_L, ano, ind_theil_L, X2012:X2021, convert = TRUE)
+ind_theil_L$ano <- gsub('X', '', ind_theil_L$ano)
+ind_theil_L <- transform(ind_theil_L, ano = as.numeric(ano))
+ind_theil_L <- transform(ind_theil_L, ind_theil_L = as.numeric(ind_theil_L))
+
+
+
+analfabetismo_25_anos <- read_excel("analfabetismo_25_anos.xlsx")
+analfabetismo_25_anos <- gather(analfabetismo_25_anos, ano, analfabetismo_25_anos, X2012:X2021, convert = TRUE)
+analfabetismo_25_anos$ano <- gsub('X', '', analfabetismo_25_anos$ano)
+analfabetismo_25_anos <- transform(analfabetismo_25_anos, ano = as.numeric(ano))
+analfabetismo_25_anos <- transform(analfabetismo_25_anos, analfabetismo_25_anos = as.numeric(analfabetismo_25_anos))
+
+
+
+analfabetismo_18_anos <- read_excel("analfabetismo_18_anos.xlsx")
+analfabetismo_18_anos <- gather(analfabetismo_18_anos, ano, analfabetismo_18_anos, X2012:X2021, convert = TRUE)
+analfabetismo_18_anos$ano <- gsub('X', '', analfabetismo_18_anos$ano)
+analfabetismo_18_anos <- transform(analfabetismo_18_anos, ano = as.numeric(ano))
+analfabetismo_18_anos <- transform(analfabetismo_18_anos, analfabetismo_18_anos = as.numeric(analfabetismo_18_anos))
+
+
+
+analfabetismo_15_anos <- read_excel("analfabetismo_15_anos.xlsx")
+analfabetismo_15_anos <- gather(analfabetismo_15_anos, ano, analfabetismo_15_anos, X2012:X2021, convert = TRUE)
+analfabetismo_15_anos$ano <- gsub('X', '', analfabetismo_15_anos$ano)
+analfabetismo_15_anos <- transform(analfabetismo_15_anos, ano = as.numeric(ano))
+analfabetismo_15_anos <- transform(analfabetismo_15_anos, analfabetismo_15_anos = as.numeric(analfabetismo_15_anos))
+
+
+
+IDHM <- read_excel("IDHM.xlsx")
+IDHM <- gather(IDHM, ano, IDHM, X2012:X2021, convert = TRUE)
+IDHM$ano <- gsub('X', '', IDHM$ano)
+IDHM <- transform(IDHM, ano = as.numeric(ano))
+IDHM <- transform(IDHM, IDHM = as.numeric(IDHM))
+
+```
+
+
+para cada indicator, conta número de linhas e o número total de NULLS e divide NULLS pela linha para obter a % de NULLS para indicador
+
+
+```{r calcular o percentual de valores nulos no conjunto de dados, echo=TRUE}
+print(paste0("renda_per_capita"))
+renda_per_capita.na <- as.data.frame(sum(is.na(renda_per_capita$renda_per_capita)))
+renda_per_capita.n <- as.data.frame(nrow(renda_per_capita))
+renda_per_capita.na$`sum(is.na(renda_per_capita$renda_per_capita))`/renda_per_capita.n$`nrow(renda_per_capita)`*100
+
+
+print(paste0("sub_esco_pop"))
+sub_esco_pop.na <- as.data.frame(sum(is.na(sub_esco_pop$sub_esco_pop)))
+sub_esco_pop.n <- as.data.frame(nrow(sub_esco_pop))
+sub_esco_pop.na$`sum(is.na(sub_esco_pop$sub_esco_pop))`/sub_esco_pop.n$`nrow(sub_esco_pop)`*100
+
+
+print(paste0("sub_freq_esco"))
+sub_freq_esco.na <- as.data.frame(sum(is.na(sub_freq_esco$sub_freq_esco)))
+sub_freq_esco.n <- as.data.frame(nrow(sub_freq_esco))
+sub_freq_esco.na$`sum(is.na(sub_freq_esco$sub_freq_esco))`/sub_freq_esco.n$`nrow(sub_freq_esco)`*100
+
+
+
+print(paste0("esperança_de_vida"))
+esperança_de_vida.na <- as.data.frame(sum(is.na(esperança_de_vida$esperança_de_vida)))
+esperança_de_vida.n <- as.data.frame(nrow(esperança_de_vida))
+esperança_de_vida.na$`sum(is.na(esperança_de_vida$esperança_de_vida))`/esperança_de_vida.n$`nrow(esperança_de_vida)`*100
+
+
+print(paste0("porcent_pobres"))
+porcent_pobres.na <- as.data.frame(sum(is.na(porcent_pobres$porcent_pobres)))
+porcent_pobres.n <- as.data.frame(nrow(porcent_pobres))
+porcent_pobres.na$`sum(is.na(rporcent_pobres$porcent_pobres))`/porcent_pobres.n$`nrow(porcent_pobres)`*100
+
+
+
+print(paste0("população_total"))
+população_total.na <- as.data.frame(sum(is.na(população_total$população_total)))
+população_total.n <- as.data.frame(nrow(população_total))
+população_total.na$`sum(is.na(população_total$população_total))`/população_total.n$`nrow(população_total)`*100
+
+
+
+print(paste0("mortalidade_infantil"))
+mortalidade_infantil.na <- as.data.frame(sum(is.na(mortalidade_infantil$mortalidade_infantil)))
+mortalidade_infantil.n <- as.data.frame(nrow(mortalidade_infantil))
+mortalidade_infantil.na$`sum(is.na(mortalidade_infantil$mortalidade_infantil))`/mortalidade_infantil.n$`nrow(mortalidade_infantil)`*100
+
+
+
+print(paste0("media_anos_de_estudo"))
+media_anos_de_estudo.na <- as.data.frame(sum(is.na(media_anos_de_estudo$media_anos_de_estudo)))
+media_anos_de_estudo.n <- as.data.frame(nrow(media_anos_de_estudo))
+media_anos_de_estudo.na$`sum(is.na(media_anos_de_estudo$media_anos_de_estudo))`/media_anos_de_estudo.n$`nrow(media_anos_de_estudo)`*100
+
+
+
+print(paste0("indice_gini"))
+indice_gini.na <- as.data.frame(sum(is.na(indice_gini$indice_gini)))
+indice_gini.n <- as.data.frame(nrow(indice_gini))
+indice_gini.na$`sum(is.na(indice_gini$indice_gini))`/indice_gini.n$`nrow(indice_gini)`*100
+
+
+print(paste0("ind_theil_L"))
+ind_theil_L.na <- as.data.frame(sum(is.na(ind_theil_L$ind_theil_L)))
+ind_theil_L.n <- as.data.frame(nrow(ind_theil_L))
+ind_theil_L.na$`sum(is.na(ind_theil_L$ind_theil_L))`/ind_theil_L.n$`nrow(ind_theil_L)`*100
+
+
+
+print(paste0("analfabetismo_25_anos"))
+analfabetismo_25_anos.na <- as.data.frame(sum(is.na(analfabetismo_25_anos$analfabetismo_25_anos)))
+analfabetismo_25_anos.n <- as.data.frame(nrow(analfabetismo_25_anos))
+analfabetismo_25_anos.na$`sum(is.na(analfabetismo_25_anos$analfabetismo_25_anos))`/analfabetismo_25_anos.n$`nrow(analfabetismo_25_anos)`*100
+
+
+
+print(paste0("analfabetismo_18_anos"))
+analfabetismo_18_anos.na <- as.data.frame(sum(is.na(analfabetismo_18_anos$analfabetismo_18_anos)))
+analfabetismo_18_anos.n <- as.data.frame(nrow(analfabetismo_18_anos))
+analfabetismo_18_anos.na$`sum(is.na(analfabetismo_18_anos$analfabetismo_18_anos))`/analfabetismo_18_anos.n$`nrow(analfabetismo_18_anos)`*100
+
+
+
+print(paste0("analfabetismo_15_anos"))
+analfabetismo_15_anos.na <- as.data.frame(sum(is.na(analfabetismo_15_anos$analfabetismo_15_anos)))
+analfabetismo_15_anos.n <- as.data.frame(nrow(analfabetismo_15_anos))
+analfabetismo_15_anos.na$`sum(is.na(analfabetismo_15_anos$analfabetismo_15_anos))`/analfabetismo_15_anos.n$`nrow(analfabetismo_15_anos)`*100
+
+
+
+print(paste0("IDHM"))
+IDHM.na <- as.data.frame(sum(is.na(IDHM$IDHM)))
+IDHM.n <- as.data.frame(nrow(IDHM))
+IDHM.na$`sum(is.na(IDHM$IDHM))`/IDHM.n$`nrow(IDHM)`*100
+
+```
+
+
+
+#criar data frame único com os indicadores IDHM.AED e IDHM.df
+
+
+
+```{R criar data frame unico com todos os indicadores, echo=TRUE}
+IDHM.AED = renda_per_capita
+IDHM.AED <- join(IDHM.AED, sub_esco_pop, by = c("ano" = "ano", "Territorialidades" = "Territorialidades"))
+IDHM.AED = join(IDHM.AED, sub_freq_esco, by = c("ano" = "ano", "Territorialidades" = "Territorialidades"))
+IDHM.AED = join(IDHM.AED, esperança_de_vida, by = c("ano" = "ano", "Territorialidades" = "Territorialidades"))
+IDHM.AED = join(IDHM.AED, porcent_pobres, by = c("ano" = "ano", "Territorialidades" = "Territorialidades"))
+IDHM.AED = join(IDHM.AED, população_total, by = c("ano" = "ano", "Territorialidades" = "Territorialidades"))
+IDHM.AED = join(IDHM.AED, mortalidade_infantil, by = c("ano" = "ano", "Territorialidades" = "Territorialidades"))
+IDHM.AED = join(IDHM.AED, media_anos_de_estudo, by = c("ano" = "ano", "Territorialidades" = "Territorialidades"))
+IDHM.AED = join(IDHM.AED, indice_gini, by = c("ano" = "ano", "Territorialidades" = "Territorialidades"))
+IDHM.AED = join(IDHM.AED, ind_theil_L, by = c("ano" = "ano", "Territorialidades" = "Territorialidades"))
+IDHM.AED = join(IDHM.AED, analfabetismo_25_anos, by = c("ano" = "ano", "Territorialidades" = "Territorialidades"))
+IDHM.AED = join(IDHM.AED, analfabetismo_18_anos, by = c("ano" = "ano", "Territorialidades" = "Territorialidades"))
+IDHM.AED = join(IDHM.AED, analfabetismo_15_anos, by = c("ano" = "ano", "Territorialidades" = "Territorialidades"))
+IDHM.AED = join(IDHM.AED, IDHM, by = c("ano" = "ano", "Territorialidades" = "Territorialidades"))
+
+```
+
+
+
+```{r criar um data frame AED.df para ser utilizado na AED, echo=TRUE}
+AED.df = IDHM.AED
+
+
+
+# Verificar que o número de estados continua os mesmos e o data frame está correto
+
+
+sapply(AED.df, function(x) length(unique(x)))
+
+str(AED.df)
+```
+#AED.df é o data frame usado na etapa de análise exploratória de dados.
+
+
+Engenharia de Dados
+
+```{r carregar os pacotes, echo = TRUE}
+library(corrplot)
+library(RColorBrewer)
+library(ggplot2)
+library(ggpubr)
+```
+
+matriz de correlação
+
+```{r matriz de correlações, echo=TRUE}
+# análise exploratória
+
+# Montar uma matriz de correlação básica de cada indicador
+#criar data frame que remova as linhas com nulos.
+
+cc = complete.cases(AED.df)
+AED.corr = AED.df[cc,]
+
+#remover não numérico
+AED.corr$Territorialidades <- NULL
+AED.corr$ano <- NULL
+
+### Matriz de corelação com Corrplot
+
+Matrix <-cor(AED.corr)
+corrplot(Matrix, type="upper", order="hclust", method="pie",
+         col=brewer.pal(n=8, name="RdYlBu"),
+         title="Matriz de Correlação dos Dados")
+
+# Adicionar uma nota de rodapé
+mtext("Elaboração própria com dados do Atlas Brasil", side=1, line=4, cex=1.2)
+# gini, theil e população tem relação fraca com IDHM. mas irei manter para análise
+```
+
+
+
+```{r montar data frame para regressões, echo=TRUE}
+# Montar um df para (IDHM ~ renda per capita, sub. ind. ecolaridade, sub. nd. frequencia escolar e esperança de vida.)
+predic.IDHM <- renda_per_capita
+predic.IDHM <- join(predic.IDHM, sub_esco_pop, by = c("ano" = "ano", "Territorialidades" = "Territorialidades"))
+predic.IDHM <- join(predic.IDHM, sub_freq_esco, by = c("ano" = "ano", "Territorialidades" = "Territorialidades"))
+predic.IDHM <- join(predic.IDHM, esperança_de_vida, by = c("ano" = "ano", "Territorialidades" = "Territorialidades"))
+predic.IDHM <- join(predic.IDHM, porcent_pobres, by = c("ano" = "ano", "Territorialidades" = "Territorialidades"))
+predic.IDHM <- join(predic.IDHM, população_total, by = c("ano" = "ano", "Territorialidades" = "Territorialidades"))
+predic.IDHM <- join(predic.IDHM, mortalidade_infantil, by = c("ano" = "ano", "Territorialidades" = "Territorialidades"))
+predic.IDHM <- join(predic.IDHM, media_anos_de_estudo, by = c("ano" = "ano", "Territorialidades" = "Territorialidades"))
+predic.IDHM <- join(predic.IDHM, indice_gini, by = c("ano" = "ano", "Territorialidades" = "Territorialidades"))
+predic.IDHM <- join(predic.IDHM, ind_theil_L, by = c("ano" = "ano", "Territorialidades" = "Territorialidades"))
+predic.IDHM <- join(predic.IDHM, analfabetismo_25_anos, by = c("ano" = "ano", "Territorialidades" = "Territorialidades"))
+predic.IDHM <- join(predic.IDHM, analfabetismo_18_anos, by = c("ano" = "ano", "Territorialidades" = "Territorialidades"))
+predic.IDHM <- join(predic.IDHM, analfabetismo_15_anos, by = c("ano" = "ano", "Territorialidades" = "Territorialidades"))
+predic.IDHM <- join(predic.IDHM, IDHM, by = c("ano" = "ano", "Territorialidades" = "Territorialidades"))
+predic.IDHM$Territorialidades <- NULL 
+cc = complete.cases(predic.IDHM)
+predic.IDHM = predic.IDHM[cc,]
+str(predic.IDHM)
+```
+
+
+```{r scatterplot, echo = TRUE}
+### Plotar a correlação como scatterplot matrix.
+# Criação do scatterplot sem título principal
+plot(predic.IDHM, pch=1, cex=.2, col=rgb(0,0,0,0.4), main="")
+
+# Adição do título, subtítulo e fonte
+mtext("Gráfico 2 - Matrix Scatterplot das variáveis com correlação com o IDHM", side=3, line=3, adj=0) # Título
+mtext("Análise baseada em dados do Atlas Brasil", side=3, line=2, adj=0) # Subtítulo
+mtext("Fonte: Elaboração própria com dados do Atlas Brasil", side=1, line=4, adj=0, cex=0.8, col="black", font=3) # Fonte
+
+
+```
+
+explorar relações lineares com potenciais relações diretas entre os indicadores
+
+```{r scatterplot com linha de regressão e os resultados, echo = TRUE}
+# Criar um scatterplot com linha de regressão para IDHM e renda per capita
+ggscatter(predic.IDHM, x = "renda_per_capita", y = "IDHM", 
+          color=rgb(0,.2,.5,  1), pch=1, add = "reg.line", 
+          add.params = list(color=rgb(0,.4,.4,  1), fill = "light gray"), 
+          conf.int = TRUE, main = "Relação entre IDHM e Renda Per Capita") +
+  labs(title = "Gráfico 3 - Relação entre IDHM e Renda Per Capita",
+       subtitle = "Análise baseada em dados do Atlas Brasil",
+       caption = "Fonte: Elaboração própria com dados do Atlas Brasil") +
+  theme(plot.caption = element_text(hjust = 0, face="italic"))
+# Printar estatística F para ver a significacia da regressão
+summary(lm(IDHM ~ renda_per_capita, data=predic.IDHM))
+
+# Criar um scatterplot com linha de regressão para IDHM e Subindice de Escolaridade
+ggscatter(predic.IDHM, x = "sub_esco_pop", y = "IDHM", 
+          color=rgb(0,.2,.5,  1), pch=1, add = "reg.line", 
+          add.params = list(color=rgb(0,.4,.4,  1), fill = "light gray"), 
+          conf.int = TRUE, main = "Relação entre IDHM e Subindice de Escolaridade") +
+  labs(title = " Gráfico 3.1 - Relação entre IDHM e Subindice de Escolaridade",
+          subtitle = "Análise baseada em dados do Atlas Brasil",
+          caption = "Fonte: Elaboração própria com dados do Atlas Brasil") +
+  theme(plot.caption = element_text(hjust = 0, face="italic"))
+# Printar estatística F para ver a significacia da regressão
+summary(lm(IDHM ~ sub_esco_pop, data=predic.IDHM))
+
+
+
+# Criar um scatterplot com linha de regressão para IDHM e Subindice de frequência Escolar
+ggscatter(predic.IDHM, x = "sub_freq_esco", y = "IDHM", 
+          color=rgb(0,.2,.5,  1), pch=1, add = "reg.line", 
+          add.params = list(color=rgb(0,.4,.4,  1), fill = "light gray"), 
+          conf.int = TRUE, main = "Relação entre IDHM e Subindice de Frequência Escolar") +
+  labs(title = "Gráfico 3.2 - Relação entre IDHM e Subindice de Frequência Escolar",
+       subtitle = "Análise baseada em dados do Atlas Brasil",
+       caption = "Fonte: Elaboração própria com dados do Atlas Brasil") +
+  theme(plot.caption = element_text(hjust = 0, face="italic"))
+# Printar estatística F para ver a significacia da regressão
+summary(lm(IDHM ~ sub_freq_esco, data=predic.IDHM))
+
+
+
+# Criar um scatterplot com linha de regressão para IDHM e Esperança de Vida
+ggscatter(predic.IDHM, x = "esperança_de_vida", y = "IDHM", 
+          color=rgb(0,.2,.5,  1), pch=1, add = "reg.line", 
+          add.params = list(color=rgb(0,.4,.4,  1), fill = "light gray"), 
+          conf.int = TRUE, main = "Relação entre IDHM e Esperança de Vida") +
+  labs(title = "Gráfico 3.3 - Relação entre IDHM e Esperança de Vida",
+       subtitle = "Análise baseada em dados do Atlas Brasil",
+       caption = "Fonte: Elaboração própria com dados do Atlas Brasil") +
+  theme(plot.caption = element_text(hjust = 0, face="italic"))
+# Printar estatística F para ver a significacia da regressão
+summary(lm(IDHM ~ esperança_de_vida, data=predic.IDHM))
+
+
+
+# Criar um scatterplot com linha de regressão para IDHM e Percentual de Pobres na População
+ggscatter(predic.IDHM, x = "porcent_pobres", y = "IDHM", 
+          color=rgb(0,.2,.5,  1), pch=1, add = "reg.line", 
+          add.params = list(color=rgb(0,.4,.4,  1), fill = "light gray"), 
+          conf.int = TRUE, main = "Relação entre IDHM e Percentual de Pobres na População") +
+  labs(title = "Gráfico 3.3 - Relação entre IDHM e Percentual de Pobres na População",
+       subtitle = "Análise baseada em dados do Atlas Brasil",
+       caption = "Fonte: Elaboração própria com dados do Atlas Brasil") +
+  theme(plot.caption = element_text(hjust = 0, face="italic"))
+# Printar estatística F para ver a significacia da regressão
+summary(lm(IDHM ~ porcent_pobres, data=predic.IDHM))
+
+
+
+
+# Criar um scatterplot com linha de regressão para IDHM e População Total
+ggscatter(predic.IDHM, x = "população_total", y = "IDHM", 
+          color=rgb(0,.2,.5,  1), pch=1, add = "reg.line", 
+          add.params = list(color=rgb(0,.4,.4,  1), fill = "light gray"), 
+          conf.int = TRUE, main = "Relação entre IDHM e População Total") +
+  labs(title = "Gráfico 3.4 - Relação entre IDHM e População Total",
+       subtitle = "Análise baseada em dados do Atlas Brasil",
+       caption = "Fonte: Elaboração própria com dados do Atlas Brasil") +
+  theme(plot.caption = element_text(hjust = 0, face="italic"))
+# Printar estatística F para ver a significacia da regressão
+summary(lm(IDHM ~ população_total, data=predic.IDHM))
+
+
+
+
+
+# Criar um scatterplot com linha de regressão para IDHM e Mortalidade Infantil
+ggscatter(predic.IDHM, x = "mortalidade_infantil", y = "IDHM", 
+          color=rgb(0,.2,.5,  1), pch=1, add = "reg.line", 
+          add.params = list(color=rgb(0,.4,.4,  1), fill = "light gray"), 
+          conf.int = TRUE, main = "Relação entre IDHM e Mortalidade Infantil") +
+  labs(title = "Gráfico 3.5 - Relação entre IDHM e Mortalidade Infantil",
+       subtitle = "Análise baseada em dados do Atlas Brasil",
+       caption = "Fonte: Elaboração própria com dados do Atlas Brasil") +
+  theme(plot.caption = element_text(hjust = 0, face="italic"))
+# Printar estatística F para ver a significacia da regressão
+summary(lm(IDHM ~ mortalidade_infantil, data=predic.IDHM))
+
+
+
+# Criar um scatterplot com linha de regressão para IDHM e Média de Anos de Estudo
+ggscatter(predic.IDHM, x = "media_anos_de_estudo", y = "IDHM", 
+          color=rgb(0,.2,.5,  1), pch=1, add = "reg.line", 
+          add.params = list(color=rgb(0,.4,.4,  1), fill = "light gray"), 
+          conf.int = TRUE, main = "Relação entre IDHM e Média de Anos de Estudo") +
+  labs(title = "Gráfico 3.6 - Relação entre IDHM e Renda Média de Anos de Estudo",
+       subtitle = "Análise baseada em dados do Atlas Brasil",
+       caption = "Fonte: Elaboração própria com dados do Atlas Brasil") +
+  theme(plot.caption = element_text(hjust = 0, face="italic"))
+# Printar estatística F para ver a significacia da regressão
+summary(lm(IDHM ~ media_anos_de_estudo, data=predic.IDHM))
+
+
+
+
+
+# Criar um scatterplot com linha de regressão para IDHM e Índice de GINI
+ggscatter(predic.IDHM, x = "indice_gini", y = "IDHM", 
+          color=rgb(0,.2,.5,  1), pch=1, add = "reg.line", 
+          add.params = list(color=rgb(0,.4,.4,  1), fill = "light gray"), 
+          conf.int = TRUE, main = "Relação entre IDHM e Índice de GINI") +
+  labs(title = "Gráfico 3.7 - Relação entre IDHM e Índice de GINI",
+       subtitle = "Análise baseada em dados do Atlas Brasil",
+       caption = "Fonte: Elaboração própria com dados do Atlas Brasil") +
+  theme(plot.caption = element_text(hjust = 0, face="italic"))
+# Printar estatística F para ver a significacia da regressão
+summary(lm(IDHM ~ indice_gini, data=predic.IDHM))
+
+
+
+# Criar um scatterplot com linha de regressão para IDHM e Índice de Theil
+ggscatter(predic.IDHM, x = "ind_theil_L", y = "IDHM", 
+          color=rgb(0,.2,.5,  1), pch=1, add = "reg.line", 
+          add.params = list(color=rgb(0,.4,.4,  1), fill = "light gray"), 
+          conf.int = TRUE, main = "Relação entre IDHM e Índice de Theil") +
+  labs(title = "Gráfico 3.8 - Relação entre IDHM e Índice de Theil",
+       subtitle = "Análise baseada em dados do Atlas Brasil",
+       caption = "Fonte: Elaboração própria com dados do Atlas Brasil") +
+  theme(plot.caption = element_text(hjust = 0, face="italic"))
+# Printar estatística F para ver a significacia da regressão
+summary(lm(IDHM ~ ind_theil_L, data=predic.IDHM))
+
+
+
+# Criar um scatterplot com linha de regressão para IDHM e Tx. Analfabetismo acima de 25 anos
+ggscatter(predic.IDHM, x = "analfabetismo_25_anos", y = "IDHM", 
+          color=rgb(0,.2,.5,  1), pch=1, add = "reg.line", 
+          add.params = list(color=rgb(0,.4,.4,  1), fill = "light gray"), 
+          conf.int = TRUE, main = "Relação entre IDHM e Tx. Analfabetismo acima de 25 anos") +
+  labs(title = "Gráfico 3.9 -Relação entre IDHM e Tx. Analfabetismo acima de 25 anos",
+       subtitle = "Análise baseada em dados do Atlas Brasil",
+       caption = "Fonte: Elaboração própria com dados do Atlas Brasil") +
+  theme(plot.caption = element_text(hjust = 0, face="italic"))
+# Printar estatística F para ver a significacia da regressão
+summary(lm(IDHM ~ analfabetismo_25_anos, data=predic.IDHM))
+
+
+# Criar um scatterplot com linha de regressão para IDHM e Tx. Analfabetismo acima de 18 anos
+ggscatter(predic.IDHM, x = "analfabetismo_18_anos", y = "IDHM", 
+          color=rgb(0,.2,.5,  1), pch=1, add = "reg.line", 
+          add.params = list(color=rgb(0,.4,.4,  1), fill = "light gray"), 
+          conf.int = TRUE, main = "Relação entre IDHM e Tx. Analfabetismo acima de 18 anos") +
+  labs(title = "Gráfico 3.10 -Relação entre IDHM e Tx. Analfabetismo acima de 18 anos",
+       subtitle = "Análise baseada em dados do Atlas Brasil",
+       caption = "Fonte: Elaboração própria com dados do Atlas Brasil") +
+  theme(plot.caption = element_text(hjust = 0, face="italic"))
+# Printar estatística F para ver a significacia da regressão
+summary(lm(IDHM ~ analfabetismo_18_anos, data=predic.IDHM))
+
+
+# Criar um scatterplot com linha de regressão para IDHM e Tx. Analfabetismo acima de 15 anos
+ggscatter(predic.IDHM, x = "analfabetismo_15_anos", y = "IDHM", 
+          color=rgb(0,.2,.5,  1), pch=1, add = "reg.line", 
+          add.params = list(color=rgb(0,.4,.4,  1), fill = "light gray"), 
+          conf.int = TRUE, main = "Relação entre IDHM e Tx. Analfabetismo acima de 15 anos") +
+  labs(title = "Gráfico 3.11 -Relação entre IDHM e Tx. Analfabetismo acima de 15 anos",
+       subtitle = "Análise baseada em dados do Atlas Brasil",
+       caption = "Fonte: Elaboração própria com dados do Atlas Brasil") +
+  theme(plot.caption = element_text(hjust = 0, face="italic"))
+# Printar estatística F para ver a significacia da regressão
+summary(lm(IDHM ~ analfabetismo_15_anos, data=predic.IDHM))
+````
+
+
+
+remover indices de Theil e Gini junto com população total
+
+```{r remover colunas, echo=TRUE}
+library(dplyr)
+predic.IDHM <- select(predic.IDHM, -ind_theil_L, -indice_gini, -população_total)
+
+```
+
+# Correlação positiva a todas as regressões( R2: renda per capita 0,8157, p-valor 2.2e-16
+# escolaridade da população 0,5889 e p-valor 2.2e-16
+# frequencia escolar 0.6569 e p-valor 2.2e-16
+# esperança de vida 0.678 e p-valor 2.2e-16)
+# população total R2 0.04372
+# indice theil L R2 0,0707
+# indice gini R2 0,06284
+
+###Decils para avaliar a possibilidade de Outliers
+
+
+````{r decils, echo = TRUE }
+print(paste0("renda_per_capita"))
+quantile(predic.IDHM$renda_per_capita, probs = seq(.1, 1, by = .1))
+sort(predic.IDHM$renda_per_capita)
+print(paste0("sub_esco_pop"))
+quantile(predic.IDHM$sub_esco_pop, probs = seq(.1, 1, by = .1))
+sort(predic.IDHM$sub_esco_pop)
+print(paste0("sub_freq_esco"))
+quantile(predic.IDHM$sub_freq_esco, probs = seq(.1, 1, by = .1))
+sort(predic.IDHM$sub_freq_esco)
+print(paste0("esperança_de_vida"))
+quantile(predic.IDHM$esperança_de_vida, probs = seq(.1, 1, by = .1))
+sort(predic.IDHM$esperança_de_vida)
+print(paste0("porcent_pobres"))
+quantile(predic.IDHM$porcent_pobres, probs = seq(.1, 1, by = .1))
+sort(predic.IDHM$porcent_pobres)
+print(paste0("mortalidade_infantil"))
+quantile(predic.IDHM$mortalidade_infantil, probs = seq(.1, 1, by = .1))
+sort(predic.IDHM$mortalidade_infantil)
+print(paste0("media_anos_de_estudo"))
+quantile(predic.IDHM$media_anos_de_estudo, probs = seq(.1, 1, by = .1))
+sort(predic.IDHM$media_anos_de_estudo)
+print(paste0("analfabetismo_25_anos"))
+quantile(predic.IDHM$analfabetismo_25_anos, probs = seq(.1, 1, by = .1))
+sort(predic.IDHM$analfabetismo_25_anos)
+print(paste0("analfabetismo_18_anos"))
+quantile(predic.IDHM$analfabetismo_18_anos, probs = seq(.1, 1, by = .1))
+sort(predic.IDHM$analfabetismo_18_anos)
+print(paste0("analfabetismo_15_anos"))
+quantile(predic.IDHM$analfabetismo_15_anos, probs = seq(.1, 1, by = .1))
+sort(predic.IDHM$analfabetismo_15_anos)
+````
+
+
+Machine Learning -- parte Final
+
+
+````{R carregar pacotes para o Machine Learning, echo = TRUE}
+library(plyr)
+library(caret)
+library(randomForest)
+library(caTools)
+
+````
+
+
+
+
+#   ----------------- SUPERVISED RANDOM FOREST REGRESSION -----------------
+
+#usar o data frame fina da análise exploratória (predic.IDHM), e selecionar os dados para treino e teste
+
+
+
+````{r separação de dados, echo = TRUE }
+#usar o data frame fina da análise exploratória (predic.IDHM), e selecionar os dados para treino (80%) e teste (20%)
+
+set.seed(123)
+amostra.IDHM <- predic.IDHM$IDHM %>%
+  createDataPartition(p = 0.8, list = FALSE)
+treino.IDHM  <- predic.IDHM[amostra.IDHM, ]
+teste.IDHM <- predic.IDHM[-amostra.IDHM, ]
+````
+
+
+
+````{r montagem do modelo, echo = TRUE}
+# random forest para regressão, iniciando com 500 arvores e mtry of 3
+IDHM.model.1 <- randomForest(IDHM ~ ., data = treino.IDHM, ntree=500, mtry = 3, 
+                         importance = TRUE, na.action = na.omit) 
+print(IDHM.model.1) 
+# Plotar erro vs numero de arvores 
+plot(IDHM.model.1, main = "")
+
+# Adicionar título e fonte no estilo ABNT
+title(main = "Gráfico 4 - Erro vs Número de Árvores no Modelo 1", adj = 0)
+mtext("Fonte: Elaboração própria com dados do Atlas Brasil", side=1, line=4, adj = 0, cex=0.8)
+
+````
+
+
+````{r verificar a melhor disposição de mtry, echo = TRUE}
+#Usar tuneRF para determinar se há melhor mtry na tentativa de encontrar o valor que produz o menor erro.
+mtry <- tuneRF(treino.IDHM[-6],treino.IDHM$IDHM, ntreeTry=500,
+               stepFactor=1,improve=0.01, trace=TRUE, plot=FALSE)
+print(mtry)
+````
+
+
+melhor mtry = 4 
+
+````{R criação de um segundo modelo com mtry 4, echo = TRUE}
+#o valor ótimo para mtry é 4, que produz o menor erro.
+
+set.seed(123)
+# random forest para regressão com mtry=4
+IDHM.model.2 <- randomForest(IDHM ~ ., data = treino.IDHM, ntree=500, mtry = 4, 
+                         importance = TRUE, na.action = na.omit) 
+print(IDHM.model.2) 
+# Plot the error vs the number of trees graph 
+plot(IDHM.model.2, main = "")
+
+# Adicionar título e fonte no estilo ABNT
+title(main = "Gráfico 5 - Erro vs Número de Árvores no Modelo 2", adj = 0)
+mtext("Fonte: Elaboração própria com dados do Atlas Brasil", side=1, line=4, adj = 0, cex=0.8)
+````
+
+desenvolver e avaliar ambos os modelos
+
+````{r avaliação modelos, echo = TRUE}
+# Fazer predições com dados de teste usando modelo 1 (mtry = 3)
+IDHM.predições.1 <- IDHM.model.1 %>% predict(teste.IDHM)
+head(IDHM.predições.1)
+# Fazer predições com dados de teste usando modelo 2 (mtry = 4)
+IDHM.predições.2 <- IDHM.model.2 %>% predict(teste.IDHM)
+head(IDHM.predições.2)
+
+
+# Calcular o erro médio de previsão -- erro quadrático médio da raiz (RMSE) de ambos os modelos
+RMSE(IDHM.predições.1, teste.IDHM$IDHM)
+RMSE(IDHM.predições.2, teste.IDHM$IDHM)
+````
+
+
+### O modelo original com mtry=4 (hdi.rf.1) na verdade tem um RMSE maior, portanto,o modelo 2 é o melhor modelo a ser usado daqui para frente. Um RMSE de 0.008546427 é consideravelmente baixo e indica um modelo de previsão altamente válido. analisar a significância de cada variável para ver possíveis mudanças na média.
+
+avaliar importância das variáveis
+
+````{r avaliação e importância das variáveis, echo = TRUE}
+#avaliar a importância das variáveis para o modelo 
+importance(IDHM.model.1)
+varImpPlot(IDHM.model.1, main = "")
+
+# Adicionar título e fonte no estilo ABNT
+title(main = "Gráfico 6 - Importância das Variáveis no Modelo Random Forest", adj = 0)
+mtext("Fonte: Elaboração própria com dados do Atlas Brasil", side=1, line=4, adj = 0, cex=0.8)
+````
+
+
+````{r avaliação e importancia das variáveis, echo = TRUE}
+#avaliar a importância das variáveis para o modelo 
+importance(IDHM.model.2)
+varImpPlot(IDHM.model.2, main = "")
+
+# Adicionar título e fonte no estilo ABNT
+title(main = "Gráfico 7 - Importância das Variáveis no Modelo Random Forest", adj = 0)
+mtext("Fonte: Elaboração própria com dados do Atlas Brasil", side=1, line=4, adj = 0, cex=0.8)
+
+````
+
+
+
+###Join predicions to test table ******************
+````{r converter predições em data frame, echo = TRUE}
+# Converter predições para um data frame 
+IDHM.predições.df <- as.data.frame(IDHM.predições.1)
+# Mesclar com base no índice
+IDHM.predições.df <- merge(teste.IDHM, IDHM.predições.df, by.x = 0, by.y = 0, all.x = TRUE, all.y = TRUE)
+# Criar uma nova coluna calculada com a diferença da predição do IDHM, e o valor Real
+IDHM.predições.df$diff <- with(IDHM.predições.df, IDHM.predições.df$IDHM - IDHM.predições.df$IDHM.predições.1)
+# Obter a média da diferença
+IDHM.predições.df
+mean(IDHM.predições.df[,"diff"])
+
+````
+
+
+````{r visualizando predições, echo = TRUE}
+### visualizando as predições do modelo em comparação com os valores reais em plots
+# Redefinir o índice de linha(row.names)
+rownames(IDHM.predições.df ) <- NULL
+# Ordenar os dados (sort)
+IDHM.predições.df <- IDHM.predições.df[order(IDHM.predições.df$IDHM),]
+# Plotar as predições versus o IDHM real
+plot(IDHM.predições.df$IDHM.predições.1, type = "l", col="red", 
+     xlab="Dados Testados", ylab="Real vs. Predição", main="")
+
+# Adicionar linhas do IDHM Real
+lines(IDHM.predições.df$IDHM, lwd=2)
+
+# Adicionar a legenda
+legend("topright", 
+       legend=c("Predição IDHM", "IDHM Real"),
+       col=c("red", "black"),
+       lty=1,
+       cex=0.8)
+
+# Adicionar título e fonte no estilo ABNT
+title(main = "Gráfico 3 - Variação da Predição do IDHM", adj = 0)
+mtext("Fonte: Elaboração própria com dados do Atlas Brasil", side=1, line=4, adj = 0, cex=0.8)
+````
+
+
+
+ML para divisão 90/10
+
+
+```{r montando o modelo, echo = TRUE}
+amostra2.IDHM <- predic.IDHM$IDHM %>%
+  createDataPartition(p = 0.9, list = FALSE)
+treino90.IDHM  <- predic.IDHM[amostra2.IDHM, ]
+teste90.IDHM <- predic.IDHM[-amostra2.IDHM, ]
+
+# random forest para regressão, iniciando com 500 arvores e mtry of 3
+IDHM.model90.1 <- randomForest(IDHM ~ ., data = treino90.IDHM, ntree=500, mtry = 3, 
+                         importance = TRUE, na.action = na.omit) 
+print(IDHM.model90.1) 
+# Plotar erro vs numero de arvores 
+
+plot(IDHM.model90.1, main = "")
+
+# Adicionar título e fonte no estilo ABNT
+title(main = "Gráfico 4 - Erro vs Número de Árvores no Modelo Random Forest", adj = 0)
+mtext("Fonte: Elaboração própria com dados do Atlas Brasil", side=1, line=4, adj = 0, cex=0.8)
+
+```
+
+## R Markdown
+
+mtry test
+
+```{r mtry, echo=TRUE}
+#Usar tuneRF para determinar se há melhor mtry na tentativa de encontrar o valor que produz o menor erro.
+mtry2 <- tuneRF(treino90.IDHM[-6],treino90.IDHM$IDHM, ntreeTry=500,
+               stepFactor=1,improve=0.01, trace=TRUE, plot=FALSE)
+print(mtry2)
+
+```
+
+## Including Plots
+
+
+```{r modelo 2, echo=TRUE}
+set.seed(123)
+# random forest para regressão com mtry=4
+IDHM.model90.2 <- randomForest(IDHM ~ ., data = treino90.IDHM, ntree=500, mtry = 4, 
+                             importance = TRUE, na.action = na.omit) 
+print(IDHM.model90.2) 
+# Plot the error vs the number of trees graph 
+plot(IDHM.model90.2, main = "")
+
+# Adicionar título e fonte no estilo ABNT
+title(main = "Gráfico 5 - Erro vs Número de Árvores no Modelo Random Forest", adj = 0)
+mtext("Fonte: Elaboração própria com dados do Atlas Brasil", side=1, line=4, adj = 0, cex=0.8)
+
+
+```
+
+
+
+```{r avaliação modelo, echo = TRUE}
+# Fazer predições com dados de teste usando modelo 1 (mtry = 3)
+IDHM.predições90.1 <- IDHM.model90.1 %>% predict(teste90.IDHM)
+head(IDHM.predições90.1)
+# Fazer predições com dados de teste usando modelo 2 (mtry = 4)
+IDHM.predições90.2 <- IDHM.model90.2 %>% predict(teste90.IDHM)
+head(IDHM.predições90.2)
+
+
+# Calcular o erro médio de previsão -- erro quadrático médio da raiz (RMSE) de ambos os modelos
+RMSE(IDHM.predições90.1, teste90.IDHM$IDHM)
+RMSE(IDHM.predições90.2, teste90.IDHM$IDHM)
+
+
+### O modelo original com mtry=4 (hdi.rf.1) na verdade tem um RMSE menor, portanto, é o melhor modelo a ser usado daqui para frente. Um RMSE de 0.006852 é consideravelmente baixo e indica um modelo de previsão altamente válido. analisar a significância de cada variável para ver possíveis mudanças na média.
+
+#avaliar a importância das variáveis para o modelo 
+importance(IDHM.model90.1)
+# Plot da importância das variáveis
+varImpPlot(IDHM.model90.1, main = "")
+
+# Adicionar título e fonte no estilo ABNT
+title(main = "Gráfico 2 - Importância das Variáveis no Modelo Random Forest", adj = 0)
+mtext("Fonte: Elaboração própria com dados do Atlas Brasil", side=1, line=4, adj = 0, cex=0.8)
+```
+
+
+
+
+```{r dataset, echo=TRUE}
+# Converter predições para um data frame 
+IDHM.predições90.df <- as.data.frame(IDHM.predições90.1)
+# Mesclar com base no índice
+IDHM.predições90.df <- merge(teste90.IDHM, IDHM.predições90.df, by.x = 0, by.y = 0, all.x = TRUE, all.y = TRUE)
+# Criar uma nova coluna calculada com a diferença da predição do IDHM, e o valor Real
+IDHM.predições90.df$diff <- with(IDHM.predições90.df, IDHM.predições90.df$IDHM - IDHM.predições90.df$IDHM.predições90.1)
+# Obter a média da diferença
+IDHM.predições90.df
+mean(IDHM.predições90.df[,"diff"])
+#0.001515058, significa que, em média, o modelo está subestimando o IDHM em 0.001515058 unidades.
+
+
+### visualizando as predições do modelo em comparação com os valores reais em plots
+# Redefinir o índice de linha(row.names)
+rownames(IDHM.predições90.df ) <- NULL
+# Ordenar os dados (sort)
+IDHM.predições90.df <- IDHM.predições90.df[order(IDHM.predições90.df$IDHM),]
+# Plotar as predições versus o IDHM real
+plot(IDHM.predições90.df$IDHM.predições90.1, type = "l", col="red", 
+     xlab="Dados Testados", ylab="Real vs. Predição", main="")
+
+# Adicionar linhas do IDHM Real
+lines(IDHM.predições90.df$IDHM, lwd=2)
+
+# Adicionar a legenda
+legend("topright", 
+       legend=c("Predição IDHM", "IDHM Real"),
+       col=c("red", "black"),
+       lty=1,
+       cex=0.8)
+
+# Adicionar título e fonte no estilo ABNT
+title(main = "Gráfico 3 - Variação da Predição do IDHM", adj = 0)
+mtext("Fonte: Elaboração própria com dados do Atlas Brasil", side=1, line=4, adj = 0, cex=0.8)
+
+```
+
+
+
+

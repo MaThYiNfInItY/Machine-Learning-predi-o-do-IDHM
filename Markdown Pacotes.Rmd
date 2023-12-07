@@ -1,0 +1,42 @@
+---
+title: "Untitled"
+author: "Machine Learning packages"
+date: "2023-10-23"
+output: html_document
+---
+
+```{r intalação pacotes, echo = TRUE}
+# instalação dos Pacotes e dependencias 
+# Configurar um espelho CRAN
+# Defina a URL do espelho CRAN que você deseja usar
+cran_mirror_url <- "https://cran.rstudio.com/"
+
+
+install.packages("tidyr", dependencies = TRUE, repos = cran_mirror_url)
+install.packages("readxl", dependencies = TRUE, repos = cran_mirror_url)
+install.packages("plyr", dependencies = TRUE, repos = cran_mirror_url)
+install.packages("corrplot", dependencies = TRUE, repos = cran_mirror_url)
+install.packages("RColorBrewer", dependencies = TRUE, repos = cran_mirror_url)
+install.packages("ggplot2", dependencies = TRUE, repos = cran_mirror_url)
+install.packages("ggpubr", dependencies = TRUE, repos = cran_mirror_url)
+install.packages("plyr", dependencies = TRUE, repos = cran_mirror_url)
+install.packages("caret", dependencies = TRUE, repos = cran_mirror_url)
+install.packages("randomForest", dependencies = TRUE, repos = cran_mirror_url)
+install.packages("caTools", dependencies = TRUE, repos = cran_mirror_url)
+```
+
+```{r carregamento dos pacotes, echo = TRUE}
+# carregamento dos pacotes que serão utilizados
+library(tidyr)
+library(readxl)
+library(plyr)
+library(corrplot)
+library(RColorBrewer)
+library(ggplot2)
+library(ggpubr)
+library(plyr)
+library(caret)
+library(randomForest)
+library(caTools)
+```
+```
